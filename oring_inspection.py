@@ -36,6 +36,13 @@ def compute_otsu_threshold(image):
             
     return optimal_threshold
 
+def apply_morphology_closing(binary_img):
+    # Setup padding for 3x3 structuring element
+    padded = np.pad(binary_img, 1, mode='constant', constant_values=0)
+    
+    # Placeholder: just return the unpadded image for now
+    return binary_img
+
 def process_image(image_path):
     img = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
     if img is None:
@@ -43,12 +50,12 @@ def process_image(image_path):
         return
         
     threshold_val = compute_otsu_threshold(img)
-    
-    # Apply threshold: O-rings are dark on light background, so invert
     binary_img = np.where(img < threshold_val, 1, 0).astype(np.uint8)
+    
+    # Call morphology function
+    cleaned_img = apply_morphology_closing(binary_img)
         
-    # Display the binary image (multiply by 255 to make 1s visible as white)
-    cv2.imshow(f"Binary Image - {os.path.basename(image_path)}", binary_img * 255)
+    cv2.imshow(f"Cleaned Image - {os.path.basename(image_path)}", cleaned_img * 255)
     cv2.waitKey(0)
     cv2.destroyAllWindows()
 
