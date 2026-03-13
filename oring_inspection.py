@@ -87,15 +87,20 @@ def analyse_regions(binary_img):
     oring_label = np.argmax(counts)
     oring_mask = (labels == oring_label).astype(np.uint8)
     
-    # Flip the mask to find the background bits
     inv_mask = 1 - oring_mask
     bg_labels, _ = connected_component_labelling(inv_mask)
-    
-    # The top left corner is definitely the outside background
     outer_bg_label = bg_labels[0, 0] 
     
-    # Everything that isn't the outside background is our solid filled shape
     filled_oring = (bg_labels != outer_bg_label).astype(np.uint8)
+    
+    # Find where all the white pixels are
+    rows, cols = np.where(filled_oring == 1)
+    if len(rows) == 0:
+        return False
+        
+    # Calculate the height and width of the bounding box
+    height = np.max(rows) - np.min(rows)
+    width = np.max(cols) - np.min(cols)
     
     return True
 
