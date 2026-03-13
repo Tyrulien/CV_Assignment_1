@@ -54,15 +54,29 @@ def apply_morphology_closing(binary_img):
     return closed
 
 def connected_component_labelling(binary_img):
-    # Setting up a blank canvas to hold our labels
     labels = np.zeros_like(binary_img, dtype=np.int32)
     current_label = 1
     rows, cols = binary_img.shape
     
-    # Just putting the loops in for now, will add the actual crawling logic next
     for r in range(rows):
         for c in range(cols):
-            pass
+            # If we hit a white pixel that hasn't been labelled yet
+            if binary_img[r, c] == 1 and labels[r, c] == 0:
+                stack = [(r, c)]
+                labels[r, c] = current_label
+                
+                # Keep crawling around until we run out of connected pixels
+                while stack:
+                    curr_r, curr_c = stack.pop()
+                    
+                    # Look up, down, left, right
+                    for dr, dc in[(-1, 0), (1, 0), (0, -1), (0, 1)]:
+                        nr, nc = curr_r + dr, curr_c + dc
+                        if 0 <= nr < rows and 0 <= nc < cols:
+                            if binary_img[nr, nc] == 1 and labels[nr, nc] == 0:
+                                labels[nr, nc] = current_label
+                                stack.append((nr, nc))
+                current_label += 1
                 
     return labels, current_label - 1
 
@@ -77,8 +91,8 @@ def process_image(image_path):
     
     cleaned_img = apply_morphology_closing(binary_img)
     
-    # Calling the new function just to make sure it doesn't crash
     labels, count = connected_component_labelling(cleaned_img)
+    print(f"Found {count} blobs in {os.path.basename(image_path)}")
         
     cv2.imshow(f"Cleaned Image - {os.path.basename(image_path)}", cleaned_img * 255)
     cv2.waitKey(0)
