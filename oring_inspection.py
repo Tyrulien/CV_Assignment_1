@@ -82,16 +82,21 @@ def analyse_regions(binary_img):
     if num_labels == 0:
         return False
         
-    # Count up the pixels for each label
     counts = np.bincount(labels.flatten())
-    # Ignore the background which is label 0
     counts[0] = 0 
-    
-    # The biggest blob left over is our O-ring
     oring_label = np.argmax(counts)
     oring_mask = (labels == oring_label).astype(np.uint8)
     
-    # Just returning True for now so the script keeps running
+    # Flip the mask to find the background bits
+    inv_mask = 1 - oring_mask
+    bg_labels, _ = connected_component_labelling(inv_mask)
+    
+    # The top left corner is definitely the outside background
+    outer_bg_label = bg_labels[0, 0] 
+    
+    # Everything that isn't the outside background is our solid filled shape
+    filled_oring = (bg_labels != outer_bg_label).astype(np.uint8)
+    
     return True
 
 def process_image(image_path):
@@ -105,7 +110,6 @@ def process_image(image_path):
     
     cleaned_img = apply_morphology_closing(binary_img)
     
-    # Pass it to our new analysis function
     is_pass = analyse_regions(cleaned_img)
         
     cv2.imshow(f"Cleaned Image - {os.path.basename(image_path)}", cleaned_img * 255)
