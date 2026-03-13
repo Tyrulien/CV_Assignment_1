@@ -9,8 +9,33 @@ def compute_otsu_threshold(image):
     hist, _ = np.histogram(image.flatten(), bins=256, range=(0, 256))
     total_pixels = image.size
     
-    # Placeholder for threshold
-    optimal_threshold = 128 
+    sum_all = np.dot(np.arange(256), hist)
+    sum_background = 0
+    weight_background = 0
+    maximum_variance = 0
+    optimal_threshold = 0
+    
+    for i in range(256):
+        weight_background += hist[i]
+        if weight_background == 0:
+            continue
+            
+        weight_foreground = total_pixels - weight_background
+        if weight_foreground == 0:
+            break
+            
+        sum_background += i * hist[i]
+        
+        mean_background = sum_background / weight_background
+        mean_foreground = (sum_all - sum_background) / weight_foreground
+        
+        # Calculate Between Class Variance
+        var_between = weight_background * weight_foreground * (mean_background - mean_foreground) ** 2
+        
+        if var_between > maximum_variance:
+            maximum_variance = var_between
+            optimal_threshold = i
+            
     return optimal_threshold
 
 def process_image(image_path):
@@ -21,7 +46,6 @@ def process_image(image_path):
         return
         
     threshold_val = compute_otsu_threshold(img)
-    print(f"Calculated threshold for {os.path.basename(image_path)}: {threshold_val}")
         
     # Display the result temporarily
     cv2.imshow(f"O-Ring Inspection - {os.path.basename(image_path)}", img)
