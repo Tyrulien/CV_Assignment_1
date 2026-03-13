@@ -37,11 +37,23 @@ def compute_otsu_threshold(image):
     return optimal_threshold
 
 def apply_morphology_closing(binary_img):
-    # Setup padding for 3x3 structuring element
+    # 1. Dilation (3x3 square structuring element)
     padded = np.pad(binary_img, 1, mode='constant', constant_values=0)
+    dilated = np.maximum.reduce([
+        padded[:-2, :-2], padded[:-2, 1:-1], padded[:-2, 2:],
+        padded[1:-1, :-2], padded[1:-1, 1:-1], padded[1:-1, 2:],
+        padded[2:, :-2], padded[2:, 1:-1], padded[2:, 2:]
+    ])
     
-    # Placeholder: just return the unpadded image for now
-    return binary_img
+    # 2. Erosion (3x3 square structuring element)
+    padded_d = np.pad(dilated, 1, mode='constant', constant_values=1)
+    closed = np.minimum.reduce([
+        padded_d[:-2, :-2], padded_d[:-2, 1:-1], padded_d[:-2, 2:],
+        padded_d[1:-1, :-2], padded_d[1:-1, 1:-1], padded_d[1:-1, 2:],
+        padded_d[2:, :-2], padded_d[2:, 1:-1], padded_d[2:, 2:]
+    ])
+    
+    return closed
 
 def process_image(image_path):
     img = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
@@ -52,7 +64,6 @@ def process_image(image_path):
     threshold_val = compute_otsu_threshold(img)
     binary_img = np.where(img < threshold_val, 1, 0).astype(np.uint8)
     
-    # Call morphology function
     cleaned_img = apply_morphology_closing(binary_img)
         
     cv2.imshow(f"Cleaned Image - {os.path.basename(image_path)}", cleaned_img * 255)
