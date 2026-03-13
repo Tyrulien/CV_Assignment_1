@@ -60,16 +60,13 @@ def connected_component_labelling(binary_img):
     
     for r in range(rows):
         for c in range(cols):
-            # If we hit a white pixel that hasn't been labelled yet
             if binary_img[r, c] == 1 and labels[r, c] == 0:
                 stack = [(r, c)]
                 labels[r, c] = current_label
                 
-                # Keep crawling around until we run out of connected pixels
                 while stack:
                     curr_r, curr_c = stack.pop()
                     
-                    # Look up, down, left, right
                     for dr, dc in[(-1, 0), (1, 0), (0, -1), (0, 1)]:
                         nr, nc = curr_r + dr, curr_c + dc
                         if 0 <= nr < rows and 0 <= nc < cols:
@@ -79,6 +76,23 @@ def connected_component_labelling(binary_img):
                 current_label += 1
                 
     return labels, current_label - 1
+
+def analyse_regions(binary_img):
+    labels, num_labels = connected_component_labelling(binary_img)
+    if num_labels == 0:
+        return False
+        
+    # Count up the pixels for each label
+    counts = np.bincount(labels.flatten())
+    # Ignore the background which is label 0
+    counts[0] = 0 
+    
+    # The biggest blob left over is our O-ring
+    oring_label = np.argmax(counts)
+    oring_mask = (labels == oring_label).astype(np.uint8)
+    
+    # Just returning True for now so the script keeps running
+    return True
 
 def process_image(image_path):
     img = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
@@ -91,8 +105,8 @@ def process_image(image_path):
     
     cleaned_img = apply_morphology_closing(binary_img)
     
-    labels, count = connected_component_labelling(cleaned_img)
-    print(f"Found {count} blobs in {os.path.basename(image_path)}")
+    # Pass it to our new analysis function
+    is_pass = analyse_regions(cleaned_img)
         
     cv2.imshow(f"Cleaned Image - {os.path.basename(image_path)}", cleaned_img * 255)
     cv2.waitKey(0)
