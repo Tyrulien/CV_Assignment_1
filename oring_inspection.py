@@ -5,7 +5,6 @@ import os
 import glob
 
 def compute_otsu_threshold(image):
-    # Calculate histogram manually using numpy
     hist, _ = np.histogram(image.flatten(), bins=256, range=(0, 256))
     total_pixels = image.size
     
@@ -29,7 +28,6 @@ def compute_otsu_threshold(image):
         mean_background = sum_background / weight_background
         mean_foreground = (sum_all - sum_background) / weight_foreground
         
-        # Calculate Between Class Variance
         var_between = weight_background * weight_foreground * (mean_background - mean_foreground) ** 2
         
         if var_between > maximum_variance:
@@ -39,16 +37,18 @@ def compute_otsu_threshold(image):
     return optimal_threshold
 
 def process_image(image_path):
-    # Read image in greyscale
     img = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
     if img is None:
         print(f"Error loading image: {image_path}")
         return
         
     threshold_val = compute_otsu_threshold(img)
+    
+    # Apply threshold: O-rings are dark on light background, so invert
+    binary_img = np.where(img < threshold_val, 1, 0).astype(np.uint8)
         
-    # Display the result temporarily
-    cv2.imshow(f"O-Ring Inspection - {os.path.basename(image_path)}", img)
+    # Display the binary image (multiply by 255 to make 1s visible as white)
+    cv2.imshow(f"Binary Image - {os.path.basename(image_path)}", binary_img * 255)
     cv2.waitKey(0)
     cv2.destroyAllWindows()
 
