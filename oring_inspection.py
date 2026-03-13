@@ -93,16 +93,27 @@ def analyse_regions(binary_img):
     
     filled_oring = (bg_labels != outer_bg_label).astype(np.uint8)
     
-    # Find where all the white pixels are
+    # Count the actual pixels
+    actual_area = np.sum(filled_oring)
+    
     rows, cols = np.where(filled_oring == 1)
     if len(rows) == 0:
         return False
         
-    # Calculate the height and width of the bounding box
     height = np.max(rows) - np.min(rows)
     width = np.max(cols) - np.min(cols)
     
-    return True
+    # Calculate what the area should be if it was a perfect circle
+    ideal_area = np.pi * (width / 2.0) * (height / 2.0)
+    
+    # Compare them
+    ratio = actual_area / ideal_area
+    
+    # If it's close to 1, it's a good ring
+    if 0.93 < ratio < 1.07:
+        return True 
+    else:
+        return False 
 
 def process_image(image_path):
     img = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
@@ -116,6 +127,7 @@ def process_image(image_path):
     cleaned_img = apply_morphology_closing(binary_img)
     
     is_pass = analyse_regions(cleaned_img)
+    print(f"{os.path.basename(image_path)} - Pass: {is_pass}")
         
     cv2.imshow(f"Cleaned Image - {os.path.basename(image_path)}", cleaned_img * 255)
     cv2.waitKey(0)
