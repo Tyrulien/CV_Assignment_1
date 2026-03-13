@@ -112,7 +112,6 @@ def analyse_regions(binary_img):
         return False 
 
 def process_image(image_path):
-    # Start the clock right here
     start_time = time.time()
     
     img = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
@@ -127,11 +126,17 @@ def process_image(image_path):
     
     is_pass = analyse_regions(cleaned_img)
     
-    # Stop the clock and figure out the milliseconds
     processing_time = (time.time() - start_time) * 1000 
-    print(f"{os.path.basename(image_path)} - Pass: {is_pass} - Time: {processing_time:.1f} ms")
-        
-    cv2.imshow(f"Cleaned Image - {os.path.basename(image_path)}", cleaned_img * 255)
+    
+    # Make a colour version of the image just so we can draw coloured text on it
+    out_img = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
+    status_text = "PASS" if is_pass else "FAIL"
+    colour = (0, 255, 0) if is_pass else (0, 0, 255) 
+    
+    cv2.putText(out_img, f"Status: {status_text}", (15, 35), cv2.FONT_HERSHEY_SIMPLEX, 1, colour, 2)
+    cv2.putText(out_img, f"Time: {processing_time:.1f} ms", (15, 75), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 0, 0), 2)
+    
+    cv2.imshow(f"O-Ring Inspection - {os.path.basename(image_path)}", out_img)
     cv2.waitKey(0)
     cv2.destroyAllWindows()
 
