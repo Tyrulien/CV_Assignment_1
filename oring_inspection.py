@@ -37,7 +37,6 @@ def compute_otsu_threshold(image):
     return optimal_threshold
 
 def apply_morphology_closing(binary_img):
-    # 1. Dilation (3x3 square structuring element)
     padded = np.pad(binary_img, 1, mode='constant', constant_values=0)
     dilated = np.maximum.reduce([
         padded[:-2, :-2], padded[:-2, 1:-1], padded[:-2, 2:],
@@ -45,7 +44,6 @@ def apply_morphology_closing(binary_img):
         padded[2:, :-2], padded[2:, 1:-1], padded[2:, 2:]
     ])
     
-    # 2. Erosion (3x3 square structuring element)
     padded_d = np.pad(dilated, 1, mode='constant', constant_values=1)
     closed = np.minimum.reduce([
         padded_d[:-2, :-2], padded_d[:-2, 1:-1], padded_d[:-2, 2:],
@@ -54,6 +52,19 @@ def apply_morphology_closing(binary_img):
     ])
     
     return closed
+
+def connected_component_labelling(binary_img):
+    # Setting up a blank canvas to hold our labels
+    labels = np.zeros_like(binary_img, dtype=np.int32)
+    current_label = 1
+    rows, cols = binary_img.shape
+    
+    # Just putting the loops in for now, will add the actual crawling logic next
+    for r in range(rows):
+        for c in range(cols):
+            pass
+                
+    return labels, current_label - 1
 
 def process_image(image_path):
     img = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
@@ -65,6 +76,9 @@ def process_image(image_path):
     binary_img = np.where(img < threshold_val, 1, 0).astype(np.uint8)
     
     cleaned_img = apply_morphology_closing(binary_img)
+    
+    # Calling the new function just to make sure it doesn't crash
+    labels, count = connected_component_labelling(cleaned_img)
         
     cv2.imshow(f"Cleaned Image - {os.path.basename(image_path)}", cleaned_img * 255)
     cv2.waitKey(0)
